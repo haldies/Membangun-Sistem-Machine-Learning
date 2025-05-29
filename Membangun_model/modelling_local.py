@@ -5,13 +5,19 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
+from pathlib import Path
 
 
 mlflow.set_tracking_uri("file:./mlruns")
 mlflow.set_experiment("titanic logistic regression")
 
 
-df = pd.read_csv("../preprocessing/titanic_preprocessed_train.csv")
+
+BASE_DIR = Path(__file__).resolve().parent.parent 
+DATA_PATH = BASE_DIR / "preprocessing" / "titanic_preprocessed_train.csv"
+
+df = pd.read_csv(DATA_PATH)
+
 df = df.drop(columns=["Name", "Ticket", "Cabin", "PassengerId"], errors='ignore')
 
 label_cols = df.select_dtypes(include='object').columns

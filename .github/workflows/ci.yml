@@ -34,8 +34,8 @@ jobs:
       with:
         name: preprocessed-data
         path: |
-          preprocessing/titanic_preprocessed_train.csv
-          preprocessing/titanic_preprocessed_test.csv
+          titanic_preprocessed_train.csv
+          titanic_preprocessed_test.csv
 
   modeling:
     runs-on: ubuntu-latest

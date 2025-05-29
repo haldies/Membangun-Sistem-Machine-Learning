@@ -34,8 +34,8 @@ jobs:
       with:
         name: preprocessed-data
         path: |
-          titanic_preprocessed_train.csv
-          titanic_preprocessed_test.csv
+          preprocessing/titanic_preprocessed_train.csv
+          preprocessing/titanic_preprocessed_test.csv
 
   modeling:
     runs-on: ubuntu-latest
@@ -55,8 +55,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install pandas mlflow scikit-learn dagshub
 
+    - name: Download preprocessed data from artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: preprocessed-data
+        path: preprocessing  
+
     - name: Run modeling script
       env:
-        MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+        DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
       run: |
         python Membangun_model/modelling.py

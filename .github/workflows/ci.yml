@@ -44,13 +44,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-
-    - name: Download preprocessed data artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: preprocessed-data
-        path: preprocessing
-
+      
     - name: Set up Python
       uses: actions/setup-python@v4
       with:

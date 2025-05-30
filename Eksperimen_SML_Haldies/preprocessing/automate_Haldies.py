@@ -1,11 +1,10 @@
 import pandas as pd
 
 def preprocess(df):
+    df.drop(columns=["Name", "Cabin", "PassengerId", ], inplace=True)
+    df['Age'] = df['Age'].fillna(df['Age'].median())
     df = df.copy()
-    
-    def normalize_name(x):
-        return " ".join([v.strip(",()[].\"'") for v in x.split(" ")])
-    
+      
     def ticket_number(x):
         return x.split(" ")[-1]
         
@@ -15,7 +14,6 @@ def preprocess(df):
             return "NONE"
         return "_".join(items[0:-1])
     
-    df["Name"] = df["Name"].apply(normalize_name)
     df["Ticket_number"] = df["Ticket"].apply(ticket_number)
     df["Ticket_item"] = df["Ticket"].apply(ticket_item)                     
     

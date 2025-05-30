@@ -16,7 +16,6 @@ mlflow.set_experiment("titanic logistic regression")
 
 df = pd.read_csv("../preprocessing/titanic_preprocessed_train.csv")
 mlflow.sklearn.autolog()
-df = df.drop(columns=["Name", "Ticket", "Cabin", "PassengerId", "Ticket_number", "Ticket_item"], errors='ignore')
 
 label_cols = df.select_dtypes(include='object').columns
 for col in label_cols:

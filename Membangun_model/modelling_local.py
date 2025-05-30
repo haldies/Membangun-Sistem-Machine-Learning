@@ -11,10 +11,7 @@ from pathlib import Path
 mlflow.set_tracking_uri("file:./mlruns")
 mlflow.set_experiment("titanic logistic regression")
 
-
-
-BASE_DIR = Path(__file__).resolve().parent.parent 
-DATA_PATH = BASE_DIR / "preprocessing" / "titanic_preprocessed_train.csv"
+DATA_PATH = './titanic_preprocessing/titanic_preprocessed_train.csv'
 
 df = pd.read_csv(DATA_PATH)
 

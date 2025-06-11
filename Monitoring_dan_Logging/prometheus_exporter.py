@@ -7,8 +7,7 @@ import threading
 
 app = Flask(__name__)
 
-# Load model dari MLflow
-model_uri = "./model.pkl"  # Sesuaikan modelmu
+model_uri = "./model.pkl"  
 model = joblib.load(model_uri)
 
 REQUEST_COUNT = Counter(
@@ -34,21 +33,18 @@ def predict():
         http_status = "200"
         response = jsonify({"prediction": int(prediction)})
     except Exception as e:
-        # Kalau error, catat http_status 500
         http_status = "500"
         response = jsonify({"error": str(e)})
         response.status_code = 500
 
     latency = time.time() - start_time
-
-    # Update metrics dengan label
+    
     REQUEST_COUNT.labels(endpoint=endpoint, http_status=http_status).inc()
     REQUEST_LATENCY.labels(endpoint=endpoint).observe(latency)
 
     return response
 
 def start_exporter():
-    # Jalankan server metrics Prometheus di port 8000
     start_http_server(8000)
     print("Prometheus metrics exporter running on port 8000")
 

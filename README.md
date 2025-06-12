@@ -1,1 +1,4 @@
 ﻿# Membangun-Sistem-Machine-Learning
+python_gc_collections_total
+process_virtual_memory_bytes
+process_resident_memory_bytes

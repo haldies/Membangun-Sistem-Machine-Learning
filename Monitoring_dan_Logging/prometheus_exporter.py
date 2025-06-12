@@ -1,56 +1,49 @@
-from prometheus_client import start_http_server, Counter, Summary
-from flask import Flask, request, jsonify
-import joblib
-import pandas as pd
+from flask import Flask, request, jsonify, Response
+import requests
 import time
-import threading
-
+import psutil  # Untuk monitoring sistem
+from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
+ 
 app = Flask(__name__)
-
-model_uri = "./model.pkl"  
-model = joblib.load(model_uri)
-
-REQUEST_COUNT = Counter(
-    'prediction_requests_total', 
-    'Total number of prediction requests', 
-    ['endpoint', 'http_status']
-)
-REQUEST_LATENCY = Summary(
-    'prediction_request_latency_seconds', 
-    'Latency of prediction requests', 
-    ['endpoint']
-)
-
+ 
+# Metrik untuk API model
+REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP Requests')  # Total request yang diterima
+REQUEST_LATENCY = Histogram('http_request_duration_seconds', 'HTTP Request Latency')  # Waktu respons API
+THROUGHPUT = Counter('http_requests_throughput', 'Total number of requests per second')  # Throughput
+ 
+# Metrik untuk sistem
+CPU_USAGE = Gauge('system_cpu_usage', 'CPU Usage Percentage')  # Penggunaan CPU
+RAM_USAGE = Gauge('system_ram_usage', 'RAM Usage Percentage')  # Penggunaan RAM
+ 
+# Endpoint untuk Prometheus
+@app.route('/metrics', methods=['GET'])
+def metrics():
+    # Update metrik sistem setiap kali /metrics diakses
+    CPU_USAGE.set(psutil.cpu_percent(interval=1))  # Ambil data CPU usage (persentase)
+    RAM_USAGE.set(psutil.virtual_memory().percent)  # Ambil data RAM usage (persentase)
+    
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+ 
+# Endpoint untuk mengakses API model dan mencatat metrik
 @app.route('/predict', methods=['POST'])
 def predict():
     start_time = time.time()
-    endpoint = "/predict"
-    
+    REQUEST_COUNT.inc()  # Tambah jumlah request
+    THROUGHPUT.inc()  # Tambah throughput (request per detik)
+ 
+    # Kirim request ke API model
+    api_url = "http://model-api:8080/invocations"
+    data = request.get_json()
+ 
     try:
-        data = request.json
-        df = pd.DataFrame([data])
-        prediction = model.predict(df)[0]
-        http_status = "200"
-        response = jsonify({"prediction": int(prediction)})
+        response = requests.post(api_url, json=data)
+        duration = time.time() - start_time
+        REQUEST_LATENCY.observe(duration)  # Catat latensi
+        
+        return jsonify(response.json())
+ 
     except Exception as e:
-        http_status = "500"
-        response = jsonify({"error": str(e)})
-        response.status_code = 500
-
-    latency = time.time() - start_time
-    
-    REQUEST_COUNT.labels(endpoint=endpoint, http_status=http_status).inc()
-    REQUEST_LATENCY.labels(endpoint=endpoint).observe(latency)
-
-    return response
-
-def start_exporter():
-    start_http_server(8000)
-    print("Prometheus metrics exporter running on port 8000")
-
-def start_flask():
-    app.run(host='0.0.0.0', port=5000)
-
+        return jsonify({"error": str(e)}), 500
+ 
 if __name__ == '__main__':
-    threading.Thread(target=start_exporter).start()
-    start_flask()
+    app.run(host='0.0.0.0', port=8000)

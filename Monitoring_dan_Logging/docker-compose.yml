@@ -1,32 +1,46 @@
-version: '3.8'
+version: '3.12.7'
 
 services:
+  model-api:
+    image: haldies/titanic-image:latest
+    container_name: model-api
+    ports:
+      - "5001:8080"
+    networks:
+      - monitoring-net
+
   prometheus:
     image: prom/prometheus:latest
+    container_name: prometheus
     ports:
       - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./data/prometheus:/prometheus
-      - ./alert_rules.yml:/etc/prometheus/alert_rules.yml
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-
-  alertmanager:
-    image: prom/alertmanager:latest
-    ports:
-      - "9093:9093"
-    volumes:
-      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
-    command:
-      - '--config.file=/etc/alertmanager/alertmanager.yml'
+    networks:
+      - monitoring-net
 
   grafana:
     image: grafana/grafana:latest
+    container_name: grafana
     ports:
-      - "3001:3000"
+      - "3000:3000"
+    networks:
+      - monitoring-net
     volumes:
-      - grafana-storage:/var/lib/grafana
+      - grafana-data:/var/lib/grafana
+
+  prometheus-exporter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: prometheus-exporter
+    ports:
+      - "8000:8000"
+    networks:
+      - monitoring-net
+
+networks:
+  monitoring-net:
 
 volumes:
-  grafana-storage:
+  grafana-data:
